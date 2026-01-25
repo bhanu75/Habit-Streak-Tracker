@@ -15,6 +15,7 @@ export interface Habit {
   targetDays: number;
   createdAt: ISODateTime;
   checkIns: ISODate[]; // Array of ISO dates
+  freezeDays: ISODate[]; // Days when streak is protected (weekends/holidays)
 }
 
 // Computed streak data (calculated, not stored)
@@ -25,6 +26,7 @@ export interface StreakData {
   progress: number; // percentage (0-100)
   isCompletedToday: boolean;
   lastCheckInDate: ISODate | null;
+  isFrozen: boolean; // Is today a freeze day
 }
 
 // Milestone definition
@@ -46,6 +48,8 @@ export interface TargetPreset {
 export interface AppState {
   habits: Habit[];
   activeHabitId: string | null;
+  userName: string; // User's name for personalization
+  theme: "light" | "dark";
 }
 
 // Export data format
@@ -54,6 +58,8 @@ export interface ExportData {
   exportedAt: ISODateTime;
   habits: Habit[];
   activeHabitId: string | null;
+  userName: string;
+  theme: "light" | "dark";
 }
 
 // Target presets constant
