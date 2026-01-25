@@ -18,12 +18,13 @@ interface Props {
 }
 
 export default function ImportExportModal({ isOpen, onClose }: Props) {
-  const { habits, activeHabitId, importData } = useHabitsStore();
+  const { habits, activeHabitId, userName, theme, importData } = useHabitsStore();
+
   const [importMode, setImportMode] = useState<"merge" | "replace">("merge");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportJSON = () => {
-    exportToJSON({ habits, activeHabitId });
+    exportToJSON({ habits, activeHabitId, userName, theme });
     notify.dataExported("JSON");
   };
 
@@ -45,7 +46,8 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
 
     try {
       const imported = await importFromJSON(file);
-      const currentState = { habits, activeHabitId };
+
+      const currentState = { habits, activeHabitId, userName, theme };
 
       const newState =
         importMode === "merge"
@@ -53,15 +55,19 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
           : replaceWithImportedData(imported);
 
       importData(newState);
+
       notifyLoading.dismiss(loadingToast);
-      notify.dataImported(newState.habits.length, importMode === "merge" ? "merged" : "replaced");
+      notify.dataImported(
+        newState.habits.length,
+        importMode === "merge" ? "merged" : "replaced"
+      );
+
       onClose();
     } catch (error) {
       notifyLoading.dismiss(loadingToast);
       notifyError.importFailed();
     }
 
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
