@@ -22,7 +22,7 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
   habits: [],
   activeHabitId: null,
   userName: "",
-  theme: "dark",
+  theme: "dark" as const,
 
   initialize: () => {
     const saved = loadFromStorage();
@@ -147,12 +147,13 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
   },
 
   clearAllData: () => {
-    const newState = {
+    const newState: AppState = {
       habits: [],
       activeHabitId: null,
       userName: "",
-      theme: "dark" as const,
+      theme: "dark",
     };
+
     set(newState);
     saveToStorage(newState);
   },
@@ -167,7 +168,9 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
 
   toggleTheme: () => {
     set((state) => {
-      const newTheme = state.theme === "dark" ? "light" : "dark";
+      const newTheme: "light" | "dark" =
+        state.theme === "dark" ? "light" : "dark";
+
       const newState = { ...state, theme: newTheme };
       saveToStorage(newState);
       return newState;
