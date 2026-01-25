@@ -11,41 +11,37 @@ import { notify } from "@/lib/notifications";
 interface Props {
   habitId: string;
   isCompleted: boolean;
+  isFrozen: boolean;
 }
 
-export default function CheckInButton({ habitId, isCompleted }: Props) {
+export default function CheckInButton({ habitId, isCompleted, isFrozen }: Props) {
   const { toggleCheckIn, habits } = useHabitsStore();
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleCheckIn = () => {
+    if (isFrozen) return;
+
     const habit = habits.find((h) => h.id === habitId);
     if (!habit) return;
 
     const oldStreak = calculateStreakData(habit).currentStreak;
-
-    // Toggle check-in
     toggleCheckIn(habitId);
 
     if (!isCompleted) {
-      // Adding check-in
       setIsAnimating(true);
 
-      // Calculate new streak
       const newHabit = habits.find((h) => h.id === habitId);
       if (newHabit) {
         const newStreakData = calculateStreakData(newHabit);
         const newStreak = newStreakData.currentStreak + 1;
 
-        // Show notification
         notify.checkIn(newStreak);
 
-        // Check for milestone
         const milestone = checkMilestoneAchieved(oldStreak, newStreak);
         if (milestone) {
           notify.milestone(milestone.days, milestone.label, milestone.emoji);
         }
 
-        // Confetti effect
         confetti({
           particleCount: 100,
           spread: 70,
@@ -56,10 +52,20 @@ export default function CheckInButton({ habitId, isCompleted }: Props) {
         setTimeout(() => setIsAnimating(false), 1000);
       }
     } else {
-      // Removing check-in
       notify.checkInRemoved();
     }
   };
+
+  if (isFrozen) {
+    return (
+      <div className="w-full py-6 rounded-2xl font-bold text-lg bg-blue-500 text-white text-center">
+        <span className="flex items-center justify-center gap-2">
+          <span>❄️</span>
+          <span>Day Frozen - Streak Protected</span>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <motion.button
