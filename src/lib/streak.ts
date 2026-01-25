@@ -9,27 +9,23 @@ import {
 } from "./date";
 
 /**
- * Calculate all streak data for a habit
+ * Calculate all streak data for a habit (with freeze day support)
  */
 export function calculateStreakData(habit: Habit): StreakData {
   const checkIns = habit.checkIns || [];
+  const freezeDays = habit.freezeDays || [];
   
-  // Remove duplicates and sort descending
   const uniqueDates = Array.from(new Set(checkIns));
   const sortedDates = sortDatesDesc(uniqueDates);
 
   const today = getTodayISO();
   const totalCheckIns = uniqueDates.length;
   const isCompletedToday = uniqueDates.includes(today);
+  const isFrozen = freezeDays.includes(today);
   const lastCheckInDate = sortedDates[0] || null;
 
-  // Calculate current streak
-  const currentStreak = calculateCurrentStreak(sortedDates);
-
-  // Calculate longest streak
-  const longestStreak = calculateLongestStreak(sortedDates);
-
-  // Calculate progress percentage
+  const currentStreak = calculateCurrentStreak(sortedDates, freezeDays);
+  const longestStreak = calculateLongestStreak(sortedDates, freezeDays);
   const progress = Math.min((totalCheckIns / habit.targetDays) * 100, 100);
 
   return {
@@ -39,46 +35,46 @@ export function calculateStreakData(habit: Habit): StreakData {
     progress: Math.round(progress),
     isCompletedToday,
     lastCheckInDate,
+    isFrozen,
   };
 }
 
 /**
- * Calculate current active streak
- * Rules:
- * - If last check-in is today: count back from today
- * - If last check-in is yesterday: count back from yesterday (streak still valid)
- * - If gap > 1 day: streak is broken (return 0)
+ * Calculate current streak with freeze day support
  */
-function calculateCurrentStreak(sortedDates: string[]): number {
+function calculateCurrentStreak(sortedDates: string[], freezeDays: string[]): number {
   if (sortedDates.length === 0) return 0;
 
   const lastDate = sortedDates[0];
   const today = getTodayISO();
+  const freezeSet = new Set(freezeDays);
 
   // Check if streak is still active
-  if (!isToday(lastDate) && !isYesterday(lastDate)) {
-    return 0; // Streak broken
+  if (!isToday(lastDate) && !isYesterday(lastDate) && !freezeSet.has(today)) {
+    return 0;
   }
 
-  // Count consecutive days backwards
   let streak = 0;
   let checkDate = isToday(lastDate) ? today : lastDate;
 
   for (const date of sortedDates) {
     if (isSameDay(date, checkDate)) {
       streak++;
-      // Move to previous day
       const d = new Date(checkDate);
       d.setDate(d.getDate() - 1);
       checkDate = d.toISOString().split("T")[0];
     } else if (date < checkDate) {
-      // Found a gap, check if it's the next expected day
       const gap = daysBetween(date, checkDate);
-      if (gap === 1) {
+      
+      // Check if gap is covered by freeze days
+      const gapDays = getDatesBetween(date, checkDate);
+      const allFrozen = gapDays.every(d => freezeSet.has(d));
+      
+      if (gap === 1 || allFrozen) {
         streak++;
         checkDate = date;
       } else {
-        break; // Gap found, stop counting
+        break;
       }
     }
   }
@@ -87,19 +83,43 @@ function calculateCurrentStreak(sortedDates: string[]): number {
 }
 
 /**
- * Calculate longest streak ever
+ * Get all dates between two dates (exclusive)
  */
-function calculateLongestStreak(sortedDates: string[]): number {
+function getDatesBetween(start: string, end: string): string[] {
+  const dates: string[] = [];
+  const d = new Date(start);
+  const endDate = new Date(end);
+  
+  d.setDate(d.getDate() + 1);
+  
+  while (d < endDate) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    dates.push(`${year}-${month}-${day}`);
+    d.setDate(d.getDate() + 1);
+  }
+  
+  return dates;
+}
+
+/**
+ * Calculate longest streak with freeze days
+ */
+function calculateLongestStreak(sortedDates: string[], freezeDays: string[]): number {
   if (sortedDates.length === 0) return 0;
 
-  const dates = [...sortedDates].reverse(); // Sort ascending for easier iteration
+  const dates = [...sortedDates].reverse();
+  const freezeSet = new Set(freezeDays);
   let longest = 1;
   let current = 1;
 
   for (let i = 1; i < dates.length; i++) {
     const gap = daysBetween(dates[i - 1], dates[i]);
+    const gapDays = getDatesBetween(dates[i - 1], dates[i]);
+    const allFrozen = gapDays.every(d => freezeSet.has(d));
 
-    if (gap === 1) {
+    if (gap === 1 || allFrozen) {
       current++;
       longest = Math.max(longest, current);
     } else {
@@ -110,9 +130,6 @@ function calculateLongestStreak(sortedDates: string[]): number {
   return longest;
 }
 
-/**
- * Get milestones with achievement status
- */
 export function getMilestones(currentStreak: number, longestStreak: number): Milestone[] {
   return MILESTONE_DEFINITIONS.map((m) => ({
     days: m.days,
@@ -122,9 +139,6 @@ export function getMilestones(currentStreak: number, longestStreak: number): Mil
   }));
 }
 
-/**
- * Get next milestone to achieve
- */
 export function getNextMilestone(currentStreak: number): Milestone | null {
   const next = MILESTONE_DEFINITIONS.find((m) => m.days > currentStreak);
   if (!next) return null;
@@ -137,9 +151,6 @@ export function getNextMilestone(currentStreak: number): Milestone | null {
   };
 }
 
-/**
- * Check if a new milestone was just achieved
- */
 export function checkMilestoneAchieved(
   previousStreak: number,
   newStreak: number
