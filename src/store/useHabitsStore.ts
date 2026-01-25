@@ -2,26 +2,28 @@ import { create } from "zustand";
 import { Habit, AppState } from "@/types/habit";
 import { getTodayISO, getNowISO } from "@/lib/date";
 import { saveToStorage, loadFromStorage } from "@/lib/storage";
-import { calculateStreakData } from "@/lib/streak";
 
 interface HabitsStore extends AppState {
-  // Actions
   initialize: () => void;
   createHabit: (name: string, emoji: string, targetDays: number) => void;
   deleteHabit: (habitId: string) => void;
   updateHabit: (habitId: string, updates: Partial<Habit>) => void;
   setActiveHabit: (habitId: string | null) => void;
   toggleCheckIn: (habitId: string) => void;
+  toggleFreezeDay: (habitId: string, date: string) => void;
   getActiveHabit: () => Habit | null;
   importData: (data: AppState) => void;
   clearAllData: () => void;
+  setUserName: (name: string) => void;
+  toggleTheme: () => void;
 }
 
 export const useHabitsStore = create<HabitsStore>((set, get) => ({
   habits: [],
   activeHabitId: null,
+  userName: "",
+  theme: "dark",
 
-  // Initialize store from localStorage
   initialize: () => {
     const saved = loadFromStorage();
     if (saved) {
@@ -29,7 +31,6 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     }
   },
 
-  // Create new habit
   createHabit: (name, emoji, targetDays) => {
     const newHabit: Habit = {
       id: `h_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -38,10 +39,12 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
       targetDays,
       createdAt: getNowISO(),
       checkIns: [],
+      freezeDays: [],
     };
 
     set((state) => {
       const newState = {
+        ...state,
         habits: [...state.habits, newHabit],
         activeHabitId: state.activeHabitId || newHabit.id,
       };
@@ -50,7 +53,6 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     });
   },
 
-  // Delete habit
   deleteHabit: (habitId) => {
     set((state) => {
       const newHabits = state.habits.filter((h) => h.id !== habitId);
@@ -60,6 +62,7 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
           : state.activeHabitId;
 
       const newState = {
+        ...state,
         habits: newHabits,
         activeHabitId: newActiveId,
       };
@@ -68,7 +71,6 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     });
   },
 
-  // Update habit
   updateHabit: (habitId, updates) => {
     set((state) => {
       const newState = {
@@ -82,7 +84,6 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     });
   },
 
-  // Set active habit
   setActiveHabit: (habitId) => {
     set((state) => {
       const newState = { ...state, activeHabitId: habitId };
@@ -91,7 +92,6 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     });
   },
 
-  // Toggle check-in for today
   toggleCheckIn: (habitId) => {
     const today = getTodayISO();
 
@@ -115,29 +115,62 @@ export const useHabitsStore = create<HabitsStore>((set, get) => ({
     });
   },
 
-  // Get active habit
+  toggleFreezeDay: (habitId, date) => {
+    set((state) => {
+      const habit = state.habits.find((h) => h.id === habitId);
+      if (!habit) return state;
+
+      const hasFreezeDay = habit.freezeDays.includes(date);
+      const newFreezeDays = hasFreezeDay
+        ? habit.freezeDays.filter((d) => d !== date)
+        : [...habit.freezeDays, date];
+
+      const newState = {
+        ...state,
+        habits: state.habits.map((h) =>
+          h.id === habitId ? { ...h, freezeDays: newFreezeDays } : h
+        ),
+      };
+      saveToStorage(newState);
+      return newState;
+    });
+  },
+
   getActiveHabit: () => {
     const state = get();
     return state.habits.find((h) => h.id === state.activeHabitId) || null;
   },
 
-  // Import data
   importData: (data) => {
     set(data);
     saveToStorage(data);
   },
 
-  // Clear all data
   clearAllData: () => {
-    const newState = { habits: [], activeHabitId: null };
+    const newState = {
+      habits: [],
+      activeHabitId: null,
+      userName: "",
+      theme: "dark" as const,
+    };
     set(newState);
     saveToStorage(newState);
   },
-}));
 
-// Utility hook to get streak data for active habit
-export function useActiveHabitStreak() {
-  const activeHabit = useHabitsStore((state) => state.getActiveHabit());
-  if (!activeHabit) return null;
-  return calculateStreakData(activeHabit);
-}
+  setUserName: (name) => {
+    set((state) => {
+      const newState = { ...state, userName: name };
+      saveToStorage(newState);
+      return newState;
+    });
+  },
+
+  toggleTheme: () => {
+    set((state) => {
+      const newTheme = state.theme === "dark" ? "light" : "dark";
+      const newState = { ...state, theme: newTheme };
+      saveToStorage(newState);
+      return newState;
+    });
+  },
+}));
