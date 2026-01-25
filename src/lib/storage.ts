@@ -44,6 +44,8 @@ export function exportToJSON(state: AppState): void {
     exportedAt: getNowISO(),
     habits: state.habits,
     activeHabitId: state.activeHabitId,
+    userName: state.userName,
+    theme: state.theme,
   };
 
   const dataStr = JSON.stringify(exportData, null, 2);
@@ -122,11 +124,15 @@ export function mergeImportedData(
   importedData: ExportData
 ): AppState {
   const existingHabitIds = new Set(currentState.habits.map((h) => h.id));
-  const newHabits = importedData.habits.filter((h) => !existingHabitIds.has(h.id));
+  const newHabits = importedData.habits.filter(
+    (h) => !existingHabitIds.has(h.id)
+  );
 
   return {
     habits: [...currentState.habits, ...newHabits],
     activeHabitId: currentState.activeHabitId,
+    userName: currentState.userName,
+    theme: currentState.theme,
   };
 }
 
@@ -137,6 +143,8 @@ export function replaceWithImportedData(importedData: ExportData): AppState {
   return {
     habits: importedData.habits,
     activeHabitId: importedData.activeHabitId || null,
+    userName: importedData.userName ?? "",
+    theme: importedData.theme ?? "dark",
   };
 }
 
