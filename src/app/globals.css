@@ -24,3 +24,8 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Tailwind Sanity Test */
+.bg-red-test {
+  @apply bg-red-500 text-white p-4 rounded;
+}
