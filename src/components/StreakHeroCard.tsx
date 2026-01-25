@@ -76,9 +76,6 @@ export default function StreakHeroCard({ habit, streakData }: Props) {
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
             <div className="text-3xl font-bold">{longestStreak}</div>
             <div className="text-sm text-white/80">Longest Streak</div>
-            <div className="bg-red-test">
-  Tailwind is working!
-</div>
           </div>
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
             <div className="text-3xl font-bold">{totalCheckIns}</div>
