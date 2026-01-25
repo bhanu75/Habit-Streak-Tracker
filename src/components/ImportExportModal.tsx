@@ -54,7 +54,7 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
 
       importData(newState);
       notifyLoading.dismiss(loadingToast);
-      notify.dataImported(newState.habits.length, importMode);
+      notify.dataImported(newState.habits.length, importMode === "merge" ? "merged" : "replaced");
       onClose();
     } catch (error) {
       notifyLoading.dismiss(loadingToast);
