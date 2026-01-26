@@ -46,7 +46,7 @@ export default function CheckInButton({ habitId, isCompleted, isFrozen }: Props)
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 },
-          colors: ["#9333ea", "#ec4899", "#f97316"],
+          colors: ["#fb923c", "#ec4899", "#f97316"],
         });
 
         setTimeout(() => setIsAnimating(false), 1000);
@@ -58,7 +58,7 @@ export default function CheckInButton({ habitId, isCompleted, isFrozen }: Props)
 
   if (isFrozen) {
     return (
-      <div className="w-full py-6 rounded-2xl font-bold text-lg bg-blue-500 text-white text-center">
+      <div className="mt-5 w-full py-4 rounded-2xl font-semibold text-white text-center bg-blue-500/30 border border-blue-400/40">
         <span className="flex items-center justify-center gap-2">
           <span>❄️</span>
           <span>Day Frozen - Streak Protected</span>
@@ -71,24 +71,22 @@ export default function CheckInButton({ habitId, isCompleted, isFrozen }: Props)
     <motion.button
       onClick={handleCheckIn}
       disabled={isAnimating}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className={`
-        relative w-full py-6 rounded-2xl font-bold text-lg
-        transition-all duration-300 shadow-lg
-        ${
-          isCompleted
-            ? "bg-green-500 text-white"
-            : "bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-2xl"
-        }
-      `}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className={[
+        "relative mt-5 w-full py-4 rounded-2xl font-semibold",
+        "transition-all duration-300 backdrop-blur-xl border",
+        isCompleted
+          ? "bg-green-500/30 text-white shadow-lg shadow-green-400/20 border-green-400/40"
+          : "bg-gradient-to-r from-orange-400/30 to-pink-400/30 text-white border-orange-400/40 hover:shadow-lg hover:shadow-orange-400/20",
+      ].join(" ")}
     >
       {isAnimating && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: [0, 1.5, 0] }}
           transition={{ duration: 0.6 }}
-          className="absolute inset-0 bg-yellow-400 rounded-2xl opacity-50"
+          className="absolute inset-0 bg-yellow-400/30 rounded-2xl"
         />
       )}
 
