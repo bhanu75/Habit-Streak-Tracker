@@ -34,9 +34,9 @@ export default function MilestonesGrid({ currentStreak, longestStreak }: Props) 
         {displayMilestones.map((milestone, index) => (
           <motion.div
             key={milestone.days}
-            initial={{ opacity: 0, scale: 0.8 }}
+            initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: index * 0.05 }}
+            transition={{ delay: index * 0.03, duration: 0.2 }}
             className={[
               "rounded-2xl border backdrop-blur-xl p-3",
               "flex flex-col items-center text-center",
