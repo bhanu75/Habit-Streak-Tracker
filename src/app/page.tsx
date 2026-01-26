@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import { useHabitsStore } from "@/store/useHabitsStore";
 import { calculateStreakData } from "@/lib/streak";
+import { startNotificationChecker, stopNotificationChecker } from "@/lib/notificationScheduler";
+import { getTodayISO } from "@/lib/date";
 import HabitSelector from "@/components/HabitSelector";
 import StreakHeroCard from "@/components/StreakHeroCard";
 import CheckInButton from "@/components/CheckInButton";
 import MilestonesGrid from "@/components/MilestonesGrid";
 import CreateHabitModal from "@/components/CreateHabitModal";
 import ImportExportModal from "@/components/ImportExportModal";
+import NotificationSettings from "@/components/NotificationSettings";
 import { notifyWarning } from "@/lib/notifications";
 
 export default function App() {
@@ -28,11 +31,39 @@ export default function App() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportExport, setShowImportExport] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false);
   const [tempName, setTempName] = useState("");
+
+  // Notification state
+  const [firedNotifications, setFiredNotifications] = useState<{ [habitId: string]: boolean }>({});
 
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // Initialize notification checker
+  useEffect(() => {
+    const interval = startNotificationChecker(
+      habits,
+      firedNotifications,
+      (habitId) => {
+        setFiredNotifications(prev => ({ ...prev, [habitId]: true }));
+      }
+    );
+
+    return () => stopNotificationChecker(interval);
+  }, [habits, firedNotifications]);
+
+  // Reset fired notifications daily
+  useEffect(() => {
+    const today = getTodayISO();
+    const lastResetDate = localStorage.getItem("lastNotificationReset");
+
+    if (lastResetDate !== today) {
+      setFiredNotifications({});
+      localStorage.setItem("lastNotificationReset", today);
+    }
+  }, []);
 
   useEffect(() => {
     if (!userName && habits.length > 0) {
@@ -42,6 +73,20 @@ export default function App() {
 
   const activeHabit = habits.find((h) => h.id === activeHabitId);
   const streakData = activeHabit ? calculateStreakData(activeHabit) : null;
+
+  // Handle calendar date click
+  const handleDateClick = (date: string) => {
+    if (!activeHabit) return;
+    
+    const hasCheckIn = activeHabit.checkIns.includes(date);
+    const updatedCheckIns = hasCheckIn
+      ? activeHabit.checkIns.filter(d => d !== date)
+      : [...activeHabit.checkIns, date].sort();
+    
+    // Update habit with new check-ins
+    const { updateHabit } = useHabitsStore.getState();
+    updateHabit(activeHabit.id, { checkIns: updatedCheckIns });
+  };
 
   if (habits.length === 0) {
     return (
@@ -86,7 +131,7 @@ export default function App() {
 
   if (!activeHabit || !streakData) return null;
 
-  const greeting = userName ? `Hey ${userName} ` : "Welcome! 👋";
+  const greeting = userName ? `Hey ${userName}! 👋` : "Welcome! 👋";
 
   return (
     <div className="min-h-screen w-full bg-black">
@@ -110,7 +155,7 @@ export default function App() {
                 {greeting}
               </h1>
               <p className="text-white/70 text-sm mt-1">
-                Keep the momentum going 🔥
+                Keep the momentum going! 🔥
               </p>
             </div>
 
@@ -120,6 +165,13 @@ export default function App() {
                 className="h-10 w-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white hover:bg-white/15 transition-colors"
               >
                 👤
+              </button>
+              <button
+                onClick={() => setShowNotificationSettings(true)}
+                className="h-10 w-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center text-white hover:bg-white/15 transition-colors"
+                title="Set notification time"
+              >
+                🔔
               </button>
               <button
                 onClick={() => setShowImportExport(true)}
@@ -140,7 +192,11 @@ export default function App() {
           <HabitSelector />
 
           {/* Main Streak Card with Calendar */}
-          <StreakHeroCard habit={activeHabit} streakData={streakData} />
+          <StreakHeroCard 
+            habit={activeHabit} 
+            streakData={streakData} 
+            onDateClick={handleDateClick}
+          />
 
           {/* Check In Button */}
           <CheckInButton
@@ -205,9 +261,18 @@ export default function App() {
 
       {/* Name Modal */}
       {showNameModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 max-w-md w-full shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 max-w-md w-full shadow-2xl relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowNameModal(false)}
+              className="absolute top-4 right-4 h-8 w-8 rounded-lg bg-white/10 border border-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/15 transition-all"
+            >
+              ✕
+            </button>
+
             <h2 className="text-2xl font-bold mb-4 text-white">What's your name?</h2>
+            <p className="text-white/60 text-sm mb-4">Optional - makes the experience personal</p>
             <input
               type="text"
               value={tempName}
@@ -216,17 +281,25 @@ export default function App() {
               className="w-full px-4 py-3 rounded-xl border border-white/10 bg-white/10 text-white placeholder:text-white/50 focus:border-orange-400/40 focus:ring-1 focus:ring-orange-400/40 outline-none transition-colors mb-4"
               autoFocus
             />
-            <button
-              onClick={() => {
-                if (tempName.trim()) {
-                  setUserName(tempName.trim());
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowNameModal(false)}
+                className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 font-semibold transition-all"
+              >
+                Skip
+              </button>
+              <button
+                onClick={() => {
+                  if (tempName.trim()) {
+                    setUserName(tempName.trim());
+                  }
                   setShowNameModal(false);
-                }
-              }}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-orange-400 to-pink-400 text-white font-semibold hover:shadow-lg hover:shadow-orange-400/20 transition-all"
-            >
-              Save
-            </button>
+                }}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-orange-400 to-pink-400 text-white font-semibold hover:shadow-lg hover:shadow-orange-400/20 transition-all"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -239,6 +312,13 @@ export default function App() {
         isOpen={showImportExport}
         onClose={() => setShowImportExport(false)}
       />
+      {activeHabit && (
+        <NotificationSettings
+          isOpen={showNotificationSettings}
+          onClose={() => setShowNotificationSettings(false)}
+          habitId={activeHabit.id}
+        />
+      )}
     </div>
   );
 }
