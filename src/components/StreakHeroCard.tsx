@@ -10,7 +10,7 @@ interface Props {
   onDateClick?: (date: string) => void;
 }
 
-export default function StreakHeroCard({ habit, streakData, onDateClick }: Props) {
+const StreakHeroCard = ({ habit, streakData, onDateClick }: Props) => {
   const { currentStreak, progress, totalCheckIns } = streakData;
   
   // Calendar data
@@ -41,8 +41,9 @@ export default function StreakHeroCard({ habit, streakData, onDateClick }: Props
       <div className="mt-4 text-center">
         <motion.div
           key={currentStreak}
-          initial={{ scale: 1.2, opacity: 0 }}
+          initial={{ scale: 1.1, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
           className="text-white text-5xl font-bold leading-none"
         >
           {currentStreak} <span className="text-4xl">🔥</span>
@@ -61,7 +62,7 @@ export default function StreakHeroCard({ habit, streakData, onDateClick }: Props
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
             className="h-full rounded-full bg-gradient-to-r from-orange-400 to-pink-400"
           />
         </div>
@@ -97,9 +98,9 @@ export default function StreakHeroCard({ habit, streakData, onDateClick }: Props
                 disabled={isFuture}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                whileHover={!isFuture ? { scale: 1.1 } : {}}
+                whileHover={!isFuture ? { scale: 1.05 } : {}}
                 whileTap={!isFuture ? { scale: 0.95 } : {}}
-                transition={{ delay: index * 0.02 }}
+                transition={{ delay: index * 0.01, duration: 0.2 }}
                 className={[
                   "aspect-square rounded-xl flex items-center justify-center text-sm select-none",
                   "border transition-all",
@@ -118,4 +119,6 @@ export default function StreakHeroCard({ habit, streakData, onDateClick }: Props
       </div>
     </div>
   );
-}
+};
+
+export default memo(StreakHeroCard);
