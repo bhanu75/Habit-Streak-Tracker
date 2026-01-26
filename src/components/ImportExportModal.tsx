@@ -46,7 +46,6 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
 
     try {
       const imported = await importFromJSON(file);
-
       const currentState = { habits, activeHabitId, userName, theme };
 
       const newState =
@@ -91,22 +90,22 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl">
-              <h2 className="text-2xl font-bold mb-6">💾 Backup & Restore</h2>
+            <div className="rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 max-w-md w-full shadow-2xl">
+              <h2 className="text-2xl font-bold mb-6 text-white">💾 Backup & Restore</h2>
 
               {/* Export Section */}
               <div className="mb-6">
-                <h3 className="font-semibold mb-3">Export Data</h3>
+                <h3 className="font-semibold mb-3 text-white/90">Export Data</h3>
                 <div className="space-y-2">
                   <button
                     onClick={handleExportJSON}
-                    className="w-full py-3 px-4 rounded-xl bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-3 px-4 rounded-xl bg-blue-500/30 border border-blue-400/40 text-white font-semibold hover:bg-blue-500/40 transition-colors flex items-center justify-center gap-2"
                   >
                     📥 Export as JSON
                   </button>
                   <button
                     onClick={handleExportCSV}
-                    className="w-full py-3 px-4 rounded-xl bg-green-500 text-white font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                    className="w-full py-3 px-4 rounded-xl bg-green-500/30 border border-green-400/40 text-white font-semibold hover:bg-green-500/40 transition-colors flex items-center justify-center gap-2"
                   >
                     📊 Export as CSV
                   </button>
@@ -115,33 +114,29 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
 
               {/* Import Section */}
               <div className="mb-6">
-                <h3 className="font-semibold mb-3">Import Data</h3>
+                <h3 className="font-semibold mb-3 text-white/90">Import Data</h3>
 
                 {/* Import Mode */}
                 <div className="flex gap-2 mb-3">
                   <button
                     onClick={() => setImportMode("merge")}
-                    className={`
-                      flex-1 py-2 px-3 rounded-lg font-medium transition-colors
-                      ${
-                        importMode === "merge"
-                          ? "bg-purple-500 text-white"
-                          : "bg-gray-100 text-gray-700"
-                      }
-                    `}
+                    className={[
+                      "flex-1 py-2 px-3 rounded-lg font-medium transition-colors border",
+                      importMode === "merge"
+                        ? "bg-orange-400/30 text-white border-orange-400/40"
+                        : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10",
+                    ].join(" ")}
                   >
                     Merge
                   </button>
                   <button
                     onClick={() => setImportMode("replace")}
-                    className={`
-                      flex-1 py-2 px-3 rounded-lg font-medium transition-colors
-                      ${
-                        importMode === "replace"
-                          ? "bg-purple-500 text-white"
-                          : "bg-gray-100 text-gray-700"
-                      }
-                    `}
+                    className={[
+                      "flex-1 py-2 px-3 rounded-lg font-medium transition-colors border",
+                      importMode === "replace"
+                        ? "bg-orange-400/30 text-white border-orange-400/40"
+                        : "bg-white/5 text-white/70 border-white/10 hover:bg-white/10",
+                    ].join(" ")}
                   >
                     Replace
                   </button>
@@ -157,12 +152,12 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
 
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-3 px-4 rounded-xl bg-purple-500 text-white font-semibold hover:bg-purple-600 transition-colors flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 rounded-xl bg-purple-500/30 border border-purple-400/40 text-white font-semibold hover:bg-purple-500/40 transition-colors flex items-center justify-center gap-2"
                 >
                   📤 Import from JSON
                 </button>
 
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-white/50 mt-2">
                   {importMode === "merge"
                     ? "Add new habits without removing existing ones"
                     : "Replace all data with imported file"}
@@ -172,7 +167,7 @@ export default function ImportExportModal({ isOpen, onClose }: Props) {
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="w-full py-3 rounded-xl bg-gray-100 hover:bg-gray-200 font-semibold transition-colors"
+                className="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 font-semibold transition-colors"
               >
                 Close
               </button>
