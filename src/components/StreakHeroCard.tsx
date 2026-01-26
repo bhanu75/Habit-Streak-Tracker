@@ -1,5 +1,4 @@
-"use client";
-
+import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { StreakData, Habit } from "@/types/habit";
 import { getLastNDays, formatDateShort } from "@/lib/date";
