@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
+import toast from "react-hot-toast";
 import { useHabitsStore } from "@/store/useHabitsStore";
 import { calculateStreakData } from "@/lib/streak";
 import { checkMilestoneAchieved } from "@/lib/streak";
 import { notify } from "@/lib/notifications";
+import { getStreakMessage } from "@/lib/motivationalQuotes";
 
 interface Props {
   habitId: string;
@@ -35,7 +37,43 @@ export default function CheckInButton({ habitId, isCompleted, isFrozen }: Props)
         const newStreakData = calculateStreakData(newHabit);
         const newStreak = newStreakData.currentStreak + 1;
 
+        // Get motivational message based on streak
+        const motivationalMsg = getStreakMessage(newStreak);
+        
+        // Show motivational toast
         notify.checkIn(newStreak);
+        
+        // Show additional motivational message
+        setTimeout(() => {
+          toast(motivationalMsg.quote, {
+            duration: 4000,
+            icon: "💪",
+            style: {
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "#fff",
+              fontWeight: "600",
+              fontSize: "14px",
+              borderRadius: "16px",
+              padding: "16px",
+            },
+          });
+          
+          setTimeout(() => {
+            toast(motivationalMsg.cta, {
+              duration: 3000,
+              icon: "🔥",
+              style: {
+                background: "rgba(255, 255, 255, 0.1)",
+                backdropFilter: "blur(10px)",
+                color: "#fff",
+                fontWeight: "600",
+                fontSize: "14px",
+                borderRadius: "16px",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+              },
+            });
+          }, 2000);
+        }, 1500);
 
         const milestone = checkMilestoneAchieved(oldStreak, newStreak);
         if (milestone) {
