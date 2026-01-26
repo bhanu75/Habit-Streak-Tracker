@@ -16,6 +16,8 @@ export interface Habit {
   createdAt: ISODateTime;
   checkIns: ISODate[]; // Array of ISO dates
   freezeDays: ISODate[]; // Days when streak is protected (weekends/holidays)
+  notificationTime?: string; // "HH:MM" format (e.g., "09:00")
+  notificationEnabled?: boolean; // Whether notifications are enabled
 }
 
 // Computed streak data (calculated, not stored)
@@ -50,6 +52,8 @@ export interface AppState {
   activeHabitId: string | null;
   userName: string; // User's name for personalization
   theme: "light" | "dark";
+  notificationPermission?: "granted" | "denied" | "default";
+  firedNotifications?: { [date: string]: { [habitId: string]: boolean } };
 }
 
 // Export data format
