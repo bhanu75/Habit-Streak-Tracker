@@ -86,7 +86,7 @@ export default function App() {
 
   if (!activeHabit || !streakData) return null;
 
-  const greeting = userName ? `Hey ${userName}! 👋` : "Welcome! 👋";
+  const greeting = userName ? `Hey ${userName} ` : "Welcome! 👋";
 
   return (
     <div className="min-h-screen w-full bg-black">
@@ -110,7 +110,7 @@ export default function App() {
                 {greeting}
               </h1>
               <p className="text-white/70 text-sm mt-1">
-                Keep the momentum going! 🔥
+                Keep the momentum going 🔥
               </p>
             </div>
 
