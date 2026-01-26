@@ -12,49 +12,48 @@ export default function MilestonesGrid({ currentStreak, longestStreak }: Props) 
   const milestones = getMilestones(currentStreak, longestStreak);
   const nextMilestone = getNextMilestone(currentStreak);
 
-  return (
-    <div>
-      {/* Next Milestone */}
-      {nextMilestone && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mb-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 text-white"
-        >
-          <h3 className="text-lg font-semibold mb-2">🎯 Next Milestone</h3>
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">{nextMilestone.emoji}</span>
-            <div>
-              <div className="text-xl font-bold">{nextMilestone.label}</div>
-              <div className="text-white/90">
-                {nextMilestone.days - currentStreak} days to go
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
+  // Show only first 4 milestones
+  const displayMilestones = milestones.slice(0, 4);
 
-      {/* Milestones Grid */}
-      <h3 className="text-xl font-bold mb-4">🏆 Milestones</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {milestones.map((milestone, index) => (
+  return (
+    <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-white/90 font-semibold">
+          <span className="text-white/70">🏆</span>
+          <span>Milestones</span>
+        </div>
+
+        {nextMilestone && (
+          <div className="text-white/60 text-xs">
+            Next: {nextMilestone.days - currentStreak}d to go
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {displayMilestones.map((milestone, index) => (
           <motion.div
             key={milestone.days}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.05 }}
-            className={`
-              rounded-xl p-4 text-center transition-all
-              ${
-                milestone.achieved
-                  ? "bg-green-500 text-white shadow-lg scale-105"
-                  : "bg-gray-100 text-gray-400"
-              }
-            `}
+            className={[
+              "rounded-2xl border backdrop-blur-xl p-3",
+              "flex items-center gap-3",
+              milestone.achieved
+                ? "ring-1 ring-orange-400/40 bg-white/10 border-white/15"
+                : "bg-white/5 border-white/10 opacity-60",
+            ].join(" ")}
           >
-            <div className="text-3xl mb-2">{milestone.emoji}</div>
-            <div className="font-semibold text-sm mb-1">{milestone.label}</div>
-            <div className="text-xs opacity-80">{milestone.days} days</div>
+            <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 text-lg flex-shrink-0">
+              {milestone.emoji}
+            </div>
+            <div className="min-w-0">
+              <div className="text-white/90 font-semibold text-sm truncate">
+                {milestone.label}
+              </div>
+              <div className="text-white/60 text-xs">{milestone.days} days</div>
+            </div>
           </motion.div>
         ))}
       </div>
