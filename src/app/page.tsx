@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, memo } from "react";
 import { Toaster } from "react-hot-toast";
 import { useHabitsStore } from "@/store/useHabitsStore";
 import { calculateStreakData } from "@/lib/streak";
@@ -74,19 +74,31 @@ export default function App() {
   const activeHabit = habits.find((h) => h.id === activeHabitId);
   const streakData = activeHabit ? calculateStreakData(activeHabit) : null;
 
-  // Handle calendar date click
-  const handleDateClick = (date: string) => {
+  // Calendar date confirmation state
+  const [dateToConfirm, setDateToConfirm] = useState<{date: string; hasCheckIn: boolean} | null>(null);
+
+  // Handle calendar date click with confirmation
+  const handleDateClick = useCallback((date: string) => {
     if (!activeHabit) return;
     
     const hasCheckIn = activeHabit.checkIns.includes(date);
+    setDateToConfirm({ date, hasCheckIn });
+  }, [activeHabit]);
+
+  // Confirm check-in action
+  const confirmCheckIn = useCallback(() => {
+    if (!activeHabit || !dateToConfirm) return;
+
+    const { date, hasCheckIn } = dateToConfirm;
     const updatedCheckIns = hasCheckIn
       ? activeHabit.checkIns.filter(d => d !== date)
       : [...activeHabit.checkIns, date].sort();
     
-    // Update habit with new check-ins
     const { updateHabit } = useHabitsStore.getState();
     updateHabit(activeHabit.id, { checkIns: updatedCheckIns });
-  };
+    
+    setDateToConfirm(null);
+  }, [activeHabit, dateToConfirm]);
 
   if (habits.length === 0) {
     return (
@@ -258,6 +270,46 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Date Confirmation Modal */}
+      {dateToConfirm && activeHabit && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="rounded-3xl border border-white/15 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="text-center mb-5">
+              <div className="text-5xl mb-3">{activeHabit.emoji}</div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                {dateToConfirm.hasCheckIn ? "Remove Check-in?" : "Mark as Complete?"}
+              </h3>
+              <p className="text-white/70 text-sm">
+                {dateToConfirm.hasCheckIn 
+                  ? `Remove check-in for ${new Date(dateToConfirm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}?`
+                  : `Did you complete "${activeHabit.name}" on ${new Date(dateToConfirm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}?`
+                }
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDateToConfirm(null)}
+                className="flex-1 py-3 rounded-xl bg-white/5 border border-white/10 text-white/70 hover:bg-white/10 font-semibold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmCheckIn}
+                className={[
+                  "flex-1 py-3 rounded-xl font-semibold transition-all",
+                  dateToConfirm.hasCheckIn
+                    ? "bg-red-500/30 border border-red-400/40 text-white hover:bg-red-500/40"
+                    : "bg-gradient-to-r from-green-400 to-emerald-400 text-white hover:shadow-lg hover:shadow-green-400/30"
+                ].join(" ")}
+              >
+                {dateToConfirm.hasCheckIn ? "Remove" : "Yes, I Did! ✓"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Name Modal */}
       {showNameModal && (
