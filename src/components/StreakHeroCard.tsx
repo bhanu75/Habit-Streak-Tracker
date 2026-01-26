@@ -7,9 +7,10 @@ import { getLastNDays, formatDateShort } from "@/lib/date";
 interface Props {
   habit: Habit;
   streakData: StreakData;
+  onDateClick?: (date: string) => void;
 }
 
-export default function StreakHeroCard({ habit, streakData }: Props) {
+export default function StreakHeroCard({ habit, streakData, onDateClick }: Props) {
   const { currentStreak, progress, totalCheckIns } = streakData;
   
   // Calendar data
@@ -87,24 +88,30 @@ export default function StreakHeroCard({ habit, streakData }: Props) {
             const hasCheckIn = checkInSet.has(date);
             const dayNum = new Date(date).getDate();
             const isToday = date === new Date().toISOString().split("T")[0];
+            const isFuture = new Date(date) > new Date();
 
             return (
-              <motion.div
+              <motion.button
                 key={date}
+                onClick={() => !isFuture && onDateClick?.(date)}
+                disabled={isFuture}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
+                whileHover={!isFuture ? { scale: 1.1 } : {}}
+                whileTap={!isFuture ? { scale: 0.95 } : {}}
                 transition={{ delay: index * 0.02 }}
                 className={[
                   "aspect-square rounded-xl flex items-center justify-center text-sm select-none",
-                  "border",
+                  "border transition-all",
                   hasCheckIn
                     ? "bg-green-400/30 text-white shadow-md shadow-green-400/20 border-green-400/40"
                     : "bg-white/5 text-white/70 border-white/10",
                   isToday && !hasCheckIn ? "ring-1 ring-orange-400/40" : "",
+                  isFuture ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-white/10",
                 ].join(" ")}
               >
                 {dayNum}
-              </motion.div>
+              </motion.button>
             );
           })}
         </div>
