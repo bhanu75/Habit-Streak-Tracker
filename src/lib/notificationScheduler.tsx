@@ -31,7 +31,6 @@ export function fireBrowserNotification(title: string, body: string, icon?: stri
       body,
       icon: icon || "/favicon.ico",
       badge: "/favicon.ico",
-      vibrate: [200, 100, 200],
       tag: "habit-reminder",
       requireInteraction: false,
     });
