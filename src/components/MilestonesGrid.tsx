@@ -19,7 +19,7 @@ export default function MilestonesGrid({ currentStreak, longestStreak }: Props) 
     <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl p-4">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-white/90 font-semibold">
-          <span className="text-white/70">🏆</span>
+          <span className="text-lg">🏆</span>
           <span>Milestones</span>
         </div>
 
@@ -39,17 +39,17 @@ export default function MilestonesGrid({ currentStreak, longestStreak }: Props) 
             transition={{ delay: index * 0.05 }}
             className={[
               "rounded-2xl border backdrop-blur-xl p-3",
-              "flex items-center gap-3",
+              "flex flex-col items-center text-center",
               milestone.achieved
                 ? "ring-1 ring-orange-400/40 bg-white/10 border-white/15"
                 : "bg-white/5 border-white/10 opacity-60",
             ].join(" ")}
           >
-            <div className="h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 text-lg flex-shrink-0">
+            <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 text-2xl mb-2">
               {milestone.emoji}
             </div>
-            <div className="min-w-0">
-              <div className="text-white/90 font-semibold text-sm truncate">
+            <div className="w-full">
+              <div className="text-white/90 font-semibold text-xs leading-tight mb-1">
                 {milestone.label}
               </div>
               <div className="text-white/60 text-xs">{milestone.days} days</div>
