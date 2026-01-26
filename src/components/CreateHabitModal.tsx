@@ -75,16 +75,16 @@ export default function CreateHabitModal({ isOpen, onClose }: Props) {
                   <label className="block text-sm font-medium mb-2 text-white/70">
                     Choose Icon
                   </label>
-                  <div className="flex gap-2 justify-center">
+                  <div className="grid grid-cols-5 gap-2">
                     {EMOJI_OPTIONS.map((e) => (
                       <button
                         key={e}
                         type="button"
                         onClick={() => setEmoji(e)}
                         className={[
-                          "text-4xl p-3 rounded-2xl transition-all border",
+                          "text-3xl p-2.5 rounded-xl transition-all border aspect-square flex items-center justify-center",
                           emoji === e
-                            ? "bg-orange-400/30 border-orange-400/50 scale-110 shadow-lg shadow-orange-400/20"
+                            ? "bg-orange-400/30 border-orange-400/50 scale-105 shadow-lg shadow-orange-400/20"
                             : "bg-white/5 border-white/10 hover:bg-white/10 hover:scale-105",
                         ].join(" ")}
                       >
