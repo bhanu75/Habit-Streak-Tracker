@@ -1,7 +1,6 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { StreakData, Habit } from "@/types/habit";
-import { getLastNDays, formatDateShort } from "@/lib/date";
 
 interface Props {
   habit: Habit;
@@ -12,16 +11,70 @@ interface Props {
 const StreakHeroCard = ({ habit, streakData, onDateClick }: Props) => {
   const { currentStreak, progress, totalCheckIns } = streakData;
   
-  // Calendar data
-  const days = getLastNDays(30);
+  // Calendar state - start with current month
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  
   const checkInSet = new Set(habit.checkIns);
   
-  // Get current month/year
-  const currentDate = new Date();
-  const monthYear = currentDate.toLocaleDateString("en-US", { 
+  // Get month/year display
+  const monthYear = currentMonth.toLocaleDateString("en-US", { 
     month: "long", 
     year: "numeric" 
   });
+  
+  // Generate calendar days for current month
+  const getCalendarDays = () => {
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    
+    // First day of month
+    const firstDay = new Date(year, month, 1);
+    // Last day of month
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Days from previous month to fill first week
+    const startingDayOfWeek = firstDay.getDay();
+    const prevMonthDays: Date[] = [];
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      const d = new Date(year, month, -i);
+      prevMonthDays.push(d);
+    }
+    
+    // Days in current month
+    const currentMonthDays: Date[] = [];
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      currentMonthDays.push(new Date(year, month, i));
+    }
+    
+    // Days from next month to complete grid (42 cells = 6 rows)
+    const totalCells = 42;
+    const nextMonthDays: Date[] = [];
+    const remainingCells = totalCells - prevMonthDays.length - currentMonthDays.length;
+    for (let i = 1; i <= remainingCells; i++) {
+      nextMonthDays.push(new Date(year, month + 1, i));
+    }
+    
+    return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
+  };
+  
+  const days = getCalendarDays();
+  
+  // Navigation handlers
+  const goToPrevMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+  
+  const goToNextMonth = () => {
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+  
+  const goToToday = () => {
+    const now = new Date();
+    setCurrentMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+  };
 
   return (
     <div className="mt-5 rounded-3xl border border-white/15 bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-5 shadow-xl">
@@ -70,9 +123,24 @@ const StreakHeroCard = ({ habit, streakData, onDateClick }: Props) => {
       {/* Calendar */}
       <div className="mt-5 rounded-2xl bg-white/5 border border-white/10 p-4">
         <div className="flex items-center justify-between mb-3">
-          <button className="text-white/60 hover:text-white transition">‹</button>
-          <p className="text-white/80 font-medium text-sm">{monthYear}</p>
-          <button className="text-white/60 hover:text-white transition">›</button>
+          <button 
+            onClick={goToPrevMonth}
+            className="h-8 w-8 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all"
+          >
+            ‹
+          </button>
+          <button 
+            onClick={goToToday}
+            className="text-white/80 font-medium text-sm hover:text-white transition-colors"
+          >
+            {monthYear}
+          </button>
+          <button 
+            onClick={goToNextMonth}
+            className="h-8 w-8 rounded-lg bg-white/10 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all"
+          >
+            ›
+          </button>
         </div>
 
         {/* Week header */}
@@ -84,30 +152,41 @@ const StreakHeroCard = ({ habit, streakData, onDateClick }: Props) => {
 
         {/* Days */}
         <div className="grid grid-cols-7 gap-2">
-          {days.map((date, index) => {
-            const hasCheckIn = checkInSet.has(date);
-            const dayNum = new Date(date).getDate();
-            const isToday = date === new Date().toISOString().split("T")[0];
-            const isFuture = new Date(date) > new Date();
+          {days.map((dateObj, index) => {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+            const day = String(dateObj.getDate()).padStart(2, "0");
+            const dateStr = `${year}-${month}-${day}`;
+            
+            const hasCheckIn = checkInSet.has(dateStr);
+            const dayNum = dateObj.getDate();
+            
+            const today = new Date();
+            const isToday = dateObj.toDateString() === today.toDateString();
+            const isFuture = dateObj > today;
+            const isCurrentMonth = dateObj.getMonth() === currentMonth.getMonth();
 
             return (
               <motion.button
-                key={date}
-                onClick={() => !isFuture && onDateClick?.(date)}
+                key={`${dateStr}-${index}`}
+                onClick={() => !isFuture && onDateClick?.(dateStr)}
                 disabled={isFuture}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                whileHover={!isFuture ? { scale: 1.05 } : {}}
-                whileTap={!isFuture ? { scale: 0.95 } : {}}
-                transition={{ delay: index * 0.01, duration: 0.2 }}
+                whileHover={!isFuture && isCurrentMonth ? { scale: 1.05 } : {}}
+                whileTap={!isFuture && isCurrentMonth ? { scale: 0.95 } : {}}
+                transition={{ delay: index * 0.005, duration: 0.15 }}
                 className={[
                   "aspect-square rounded-xl flex items-center justify-center text-sm select-none",
                   "border transition-all",
-                  hasCheckIn
+                  !isCurrentMonth ? "text-white/30 border-white/5" : "",
+                  hasCheckIn && isCurrentMonth
                     ? "bg-green-400/30 text-white shadow-md shadow-green-400/20 border-green-400/40"
-                    : "bg-white/5 text-white/70 border-white/10",
-                  isToday && !hasCheckIn ? "ring-1 ring-orange-400/40" : "",
-                  isFuture ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-white/10",
+                    : isCurrentMonth
+                    ? "bg-white/5 text-white/70 border-white/10"
+                    : "bg-transparent border-transparent",
+                  isToday && !hasCheckIn && isCurrentMonth ? "ring-1 ring-orange-400/40" : "",
+                  isFuture ? "opacity-40 cursor-not-allowed" : isCurrentMonth ? "cursor-pointer hover:bg-white/10" : "cursor-default",
                 ].join(" ")}
               >
                 {dayNum}
